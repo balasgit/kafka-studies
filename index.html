@@ -264,6 +264,27 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#kafka-connect-with-debezium" title="Kafka Connect with Debezium" class="md-nav__link">
+    Kafka Connect with Debezium
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kafka-with-quarkus" title="Kafka with Quarkus" class="md-nav__link">
+    Kafka with Quarkus
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kafka-with-apache-camel-30" title="Kafka with Apache Camel 3.0" class="md-nav__link">
+    Kafka with Apache Camel 3.0
+  </a>
+  
+</li>
+      
       
       
       
@@ -329,6 +350,18 @@
 
 
   <li class="md-nav__item">
+    <a href="mirrormaker/" title="Mirror Maker 2.0" class="md-nav__link">
+      Mirror Maker 2.0
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
     <a href="https://ibm-cloud-architecture.github.io/refarch-eda/kafka/FAQ" title="Kafka FAQ" class="md-nav__link">
       Kafka FAQ
     </a>
@@ -374,6 +407,27 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#kafka-connect-with-debezium" title="Kafka Connect with Debezium" class="md-nav__link">
+    Kafka Connect with Debezium
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kafka-with-quarkus" title="Kafka with Quarkus" class="md-nav__link">
+    Kafka with Quarkus
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kafka-with-apache-camel-30" title="Kafka with Apache Camel 3.0" class="md-nav__link">
+    Kafka with Apache Camel 3.0
+  </a>
+  
+</li>
+      
       
       
       
@@ -396,74 +450,10 @@
                 <h1 id="apache-kafka-studies">Apache Kafka Studies</h1>
 <p>This repository regroup a set of deeper personal studies on kafka.</p>
 <h2 id="mirror-maker-20">Mirror Maker 2.0</h2>
-<p>The folder <code>mirror-maker-2</code> includes the scripts and configuration to support the following test:</p>
-<p><img alt="" src="images/mm2-test1.png" /></p>
-<p>The source cluster is a Strimzi cluster running on Openshift as a serivce on IBM Cloud. It was installed following the instructions <a href="https://ibm-cloud-architecture.github.io/refarch-eda/deployments/strimzi/deploy/">documented here</a>.</p>
-<p>The target cluster is also based on Strimzi kafka 2.4 docker image, but run in a local host, with docker compose. It starts two zookeeper nodes, and 3 kafka nodes. We need 3 kafka brokers as mirror maker created topics with a replication factor set to 3.</p>
-<ul>
-<li>Start the target cluster using:</li>
-</ul>
-<div class="codehilite"><pre><span></span>docker-compose up
-</pre></div>
-
-<ul>
-<li>Start mirror maker.</li>
-</ul>
-<p>Start another kakfa docker container, connected to the other brokers via the <code>kafkanet</code> network:</p>
-<div class="codehilite"><pre><span></span>docker run -ti --network kafkanet -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home strimzi/kafka:latest-kafka-2.4.0 bash
-
-<span class="c1"># inside the container starts mirror maker 2.0</span>
-/opt/kakfa/bin/connect-mirror-maker.sh /home/strimzi-mm2.properties
-</pre></div>
-
-<p>The properties file given as argument defines the source and target cluster and the topics to replicate:</p>
-<div class="codehilite"><pre><span></span><span class="na">clusters</span><span class="o">=</span><span class="s">source, target</span>
-<span class="na">source.bootstrap.servers</span><span class="o">=</span><span class="s">my-cluster-kafka-bootstrap-jb-kafka-strimzi.gse-eda-demos-fa9ee67c9ab6a7791435450358e564cc-0001.us-east.containers.appdomain.cloud:443</span>
-<span class="na">source.security.protocol</span><span class="o">=</span><span class="s">SSL</span>
-<span class="na">source.ssl.truststore.password</span><span class="o">=</span><span class="s">password</span>
-<span class="na">source.ssl.truststore.location</span><span class="o">=</span><span class="s">/home/truststore.jks</span>
-<span class="na">target.bootstrap.servers</span><span class="o">=</span><span class="s">kafka1:9092,kafka2:9093,kafka3:9094</span>
-<span class="c"># enable and configure individual replication flows</span>
-<span class="na">source-&gt;target.enabled</span><span class="o">=</span><span class="s">true</span>
-<span class="na">source-&gt;target.topics</span><span class="o">=</span><span class="s">orders</span>
-</pre></div>
-
-<p>As the source cluster is deployed on Openshift, the exposed route to access the brokers is using TLS connection. So we need the certificate and create a truststore to be used by those Java programs. All kafka tools are done in java or scala so running in a JVM, which needs truststore for keep trusted TLS certificates. To get the certificate do the following:</p>
-<div class="codehilite"><pre><span></span><span class="c1"># Get the host ip address from the Route resource</span>
-oc get routes my-cluster-kafka-bootstrap -o<span class="o">=</span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.ingress[0].host}{&quot;\n&quot;}&#39;</span>
-
-<span class="c1">#Get the TLS certificate from the broker</span>
-oc get secrets
-oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.crt --to<span class="o">=</span>- &gt; ca.crt
-<span class="c1"># transform it fo java truststore</span>
-keytool -import -trustcacerts -alias root -file ca.crt -keystore truststore.jks -storepass password -noprompt
-</pre></div>
-
-<ul>
-<li>
-<p>The consumer may be started in second or third step. To start it we can start a new container or use one of the running kafka container. Using the <code>Docker perspective</code> in Visual Code, we can get into a bash shell within the Kafka broker container. The local folder is mounted to <code>/home</code>. Then the script, <code>consumeFromLocal.sh</code> will get messages from the replicated topic: <code>source.orders</code></p>
-</li>
-<li>
-<p>Finally start the producer in another kafka broker shell</p>
-</li>
-</ul>
-<div class="codehilite"><pre><span></span>/home/produceToStrimzi.sh
-</pre></div>
-
-<p>For the second tests the source is Event Streams on IBM Cloud:</p>
-<p><img alt="" src="images/mm2-test2.png" /></p>
-<p>This time the producer and Mirror maker need to get the APIkey, so the mirror-maker.properties looks like:</p>
-<div class="codehilite"><pre><span></span><span class="na">clusters</span><span class="o">=</span><span class="s">source, target</span>
-<span class="na">source.bootstrap.servers</span><span class="o">=</span><span class="s">broker-3-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-1-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-0-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-5-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-2-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-4-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093</span>
-<span class="na">source.security.protocol</span><span class="o">=</span><span class="s">SASL_SSL</span>
-<span class="na">source.ssl.protocol</span><span class="o">=</span><span class="s">TLSv1.2</span>
-<span class="na">source.sasl.mechanism</span><span class="o">=</span><span class="s">PLAIN</span>
-<span class="na">source.sasl.jaas.config</span><span class="o">=</span><span class="s">org.apache.kafka.common.security.plain.PlainLoginModule required username=&quot;token&quot; password=&quot;985...&quot;;</span>
-<span class="na">target.bootstrap.servers</span><span class="o">=</span><span class="s">kafka1:9092,kafka2:9093,kafka3:9094</span>
-<span class="c"># enable and configure individual replication flows</span>
-<span class="na">source-&gt;target.enabled</span><span class="o">=</span><span class="s">true</span>
-<span class="na">source-&gt;target.topics</span><span class="o">=</span><span class="s">orders</span>
-</pre></div>
+<p>The <code>mirror-maker-2</code> folder includes the scripts and configurations to support different mirroring strategies. The details are in <a href="mirrormaker/">this note.</a></p>
+<h2 id="kafka-connect-with-debezium">Kafka Connect with Debezium</h2>
+<h2 id="kafka-with-quarkus">Kafka with Quarkus</h2>
+<h2 id="kafka-with-apache-camel-30">Kafka with Apache Camel 3.0</h2>
                 
                   
                 

@@ -289,6 +289,63 @@
       
       
 
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Mirror Maker 2.0
+      </label>
+    
+    <a href="./" title="Mirror Maker 2.0" class="md-nav__link md-nav__link--active">
+      Mirror Maker 2.0
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#from-strimzi-kafka-cluster-on-openshift-cluster-to-local-cluster" title="From Strimzi kafka cluster on Openshift cluster to local cluster" class="md-nav__link">
+    From Strimzi kafka cluster on Openshift cluster to local cluster
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#from-event-streams-to-local-cluster" title="From Event Streams to local cluster" class="md-nav__link">
+    From Event Streams to local cluster
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+    
+      
+      
+      
+
 
   <li class="md-nav__item">
     <a href="https://ibm-cloud-architecture.github.io/refarch-eda/kafka/FAQ" title="Kafka FAQ" class="md-nav__link">
@@ -336,6 +393,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#from-event-streams-to-local-cluster" title="From Event Streams to local cluster" class="md-nav__link">
+    From Event Streams to local cluster
+  </a>
+  
+</li>
+      
       
       
       
@@ -362,19 +426,20 @@
 <p>The source cluster is a Strimzi cluster running on Openshift as a service on IBM Cloud. It was installed following the instructions <a href="https://ibm-cloud-architecture.github.io/refarch-eda/deployments/strimzi/deploy/">documented here</a>.</p>
 <p>The target cluster is also based on Strimzi kafka 2.4 docker image, but run in a local host, with docker compose. It starts two zookeeper nodes, and three kafka nodes. We need 3 kafka brokers as mirror maker created topics with a replication factor set to 3.</p>
 <ul>
-<li>Start the target cluster using:</li>
+<li>Start the target cluster runnning on your laptop using:</li>
 </ul>
 <div class="codehilite"><pre><span></span>docker-compose up
 </pre></div>
 
 <ul>
-<li>Start <a href="https://cwiki.apache.org/confluence/display/KAFKA/KIP-382%3A+MirrorMaker+2.0">mirror maker2.0</a>.</li>
-</ul>
-<p>Start another kakfa docker container, connected to the other brokers via the <code>kafkanet</code> network:</p>
+<li>
+<p>Start <a href="https://cwiki.apache.org/confluence/display/KAFKA/KIP-382%3A+MirrorMaker+2.0">mirror maker2.0</a>: </p>
+<p>By using a new container, start another kakfa 2.4+ docker container, connected to the  brokers via the <code>kafkanet</code> network, and mounting the configuration in the <code>/home</code>:</p>
 <div class="codehilite"><pre><span></span>docker run -ti --network kafkanet -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home strimzi/kafka:latest-kafka-2.4.0 bash
+</pre></div>
 
-<span class="c1"># inside the container starts mirror maker 2.0</span>
-/opt/kakfa/bin/connect-mirror-maker.sh /home/strimzi-mm2.properties
+<p>Inside this container starts mirror maker 2.0 using the script: <code>/opt/kakfa/bin/connect-mirror-maker.sh</code></p>
+<div class="codehilite"><pre><span></span>/opt/kakfa/bin/connect-mirror-maker.sh /home/strimzi-mm2.properties
 </pre></div>
 
 <p>The <code>strimzi-mm2.properties</code> properties file given as argument defines the source and target clusters and the topics to replicate:</p>
@@ -389,31 +454,43 @@
 <span class="na">source-&gt;target.topics</span><span class="o">=</span><span class="s">orders</span>
 </pre></div>
 
-<p>As the source cluster is deployed on Openshift, the exposed route to access the brokers is using TLS connection. So we need the certificate and create a truststore to be used by those Java programs. All kafka tools are done in java or scala so running in a JVM, which needs truststore for keep trusted TLS certificates. To get the certificate do the following:</p>
-<div class="codehilite"><pre><span></span><span class="c1"># Get the host ip address from the Route resource</span>
-oc get routes my-cluster-kafka-bootstrap -o<span class="o">=</span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.ingress[0].host}{&quot;\n&quot;}&#39;</span>
-
-<span class="c1">#Get the TLS certificate from the broker</span>
-oc get secrets
-oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.crt --to<span class="o">=</span>- &gt; ca.crt
-<span class="c1"># transform it fo java truststore</span>
-keytool -import -trustcacerts -alias root -file ca.crt -keystore truststore.jks -storepass password -noprompt
+<p>As the source cluster is deployed on Openshift, the exposed route to access the brokers is using TLS connection. So we need the certificate and create a truststore to be used by those Java programs. All kafka tools are done in java or scala so running in a JVM, which needs truststore for keep trusted TLS certificates. To get the certificate do the following steps:</p>
+<ol>
+<li>
+<p>Get the host ip address from the Route resource</p>
+<div class="codehilite"><pre><span></span>oc get routes my-cluster-kafka-bootstrap -o<span class="o">=</span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.ingress[0].host}{&quot;\n&quot;}&#39;</span>
 </pre></div>
 
-<ul>
+</li>
 <li>
-<p>The consumer may be started in second or third step. To start it we can start a new container or use one of the running kafka container. Using the <code>Docker perspective</code> in Visual Code, we can get into a bash shell within the Kafka broker container. The local folder is mounted to <code>/home</code>. Then the script, <code>consumeFromLocal.sh</code> will get messages from the replicated topic: <code>source.orders</code></p>
+<p>Get the TLS certificate from the broker</p>
+<div class="codehilite"><pre><span></span>oc get secrets
+oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.crt --to<span class="o">=</span>- &gt; ca.crt
+</pre></div>
+
+</li>
+<li>
+<p>Transform the certificate fo java truststore</p>
+<div class="codehilite"><pre><span></span>keytool -import -trustcacerts -alias root -file ca.crt -keystore truststore.jks -storepass password -noprompt
+</pre></div>
+
+</li>
+</ol>
+</li>
+<li>
+<p>The consumer may be started in second or third step. To start it, you can use a new container or use one of the running kafka broker container. Using the <code>Docker perspective</code> in Visual Code, we can get into a bash shell within one of the Kafka broker container. The local folder is mounted to <code>/home</code>. Then the script, <code>consumeFromLocal.sh source.orders</code> will get messages from the replicated topic: <code>source.orders</code></p>
 </li>
 <li>
 <p>Finally start the producer in another kafka broker shell</p>
 </li>
 </ul>
-<div class="codehilite"><pre><span></span>/home/produceToStrimzi.sh
+<div class="codehilite"><pre><span></span>/home/produceToStrimzi.sh orders
 </pre></div>
 
+<h2 id="from-event-streams-to-local-cluster">From Event Streams to local cluster</h2>
 <p>For the second tests the source is Event Streams on IBM Cloud:</p>
 <p><img alt="" src="../images/mm2-test2.png" /></p>
-<p>This time the producer and Mirror maker need to get the APIkey, so the mirror-maker.properties looks like:</p>
+<p>This time the producer adds headers and message and Mirror maker need to get the APIkey, so the mirror-maker.properties looks like:</p>
 <div class="codehilite"><pre><span></span><span class="na">clusters</span><span class="o">=</span><span class="s">source, target</span>
 <span class="na">source.bootstrap.servers</span><span class="o">=</span><span class="s">broker-3-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-1-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-0-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-5-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-2-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-4-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093</span>
 <span class="na">source.security.protocol</span><span class="o">=</span><span class="s">SASL_SSL</span>
@@ -425,6 +502,15 @@ keytool -import -trustcacerts -alias root -file ca.crt -keystore truststore.jks 
 <span class="na">source-&gt;target.enabled</span><span class="o">=</span><span class="s">true</span>
 <span class="na">source-&gt;target.topics</span><span class="o">=</span><span class="s">orders</span>
 </pre></div>
+
+<p>The figure below illustrates the mirror maker internal components running in Kafka Connect. </p>
+<p><img alt="" src="../images/mm-k-connect.png" /></p>
+<p>On the the target cluster, mirror maker created the following topics:</p>
+<ul>
+<li>connect-configs: This topic will store the connector and task configurations.</li>
+<li>connect-offsets: This topic is used to store offsets for Kafka Connect.</li>
+<li>connect-status: This topic will store status updates of connectors and tasks.</li>
+</ul>
                 
                   
                 
@@ -441,6 +527,27 @@ keytool -import -trustcacerts -alias root -file ca.crt -keystore truststore.jks 
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../kstreams/" title="Kafka streaming notes" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Kafka streaming notes
+              </span>
+            </div>
+          </a>
+        
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
