@@ -331,6 +331,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#from-event-streams-on-cloud-to-strimzi-cluster-on-openshift" title="From Event Streams On Cloud to Strimzi Cluster on Openshift" class="md-nav__link">
+    From Event Streams On Cloud to Strimzi Cluster on Openshift
+  </a>
+  
+</li>
+      
       
       
       
@@ -400,6 +407,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#from-event-streams-on-cloud-to-strimzi-cluster-on-openshift" title="From Event Streams On Cloud to Strimzi Cluster on Openshift" class="md-nav__link">
+    From Event Streams On Cloud to Strimzi Cluster on Openshift
+  </a>
+  
+</li>
+      
       
       
       
@@ -454,7 +468,8 @@
 <span class="na">source-&gt;target.topics</span><span class="o">=</span><span class="s">orders</span>
 </pre></div>
 
-<p>As the source cluster is deployed on Openshift, the exposed route to access the brokers is using TLS connection. So we need the certificate and create a truststore to be used by those Java programs. All kafka tools are done in java or scala so running in a JVM, which needs truststore for keep trusted TLS certificates. To get the certificate do the following steps:</p>
+<p>As the source cluster is deployed on Openshift, the exposed route to access the brokers is using TLS connection. So we need the certificate and create a truststore to be used by those Java programs. All kafka tools are done in java or scala so running in a JVM, which needs truststore for keep trusted TLS certificates. 
+When running from a remote system to get the certificate do the following steps:</p>
 <ol>
 <li>
 <p>Get the host ip address from the Route resource</p>
@@ -476,6 +491,21 @@ oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.cr
 
 </li>
 </ol>
+<p>For Openshift or Kubernetes deployment, the mirror maker descriptor needs to declare the TLS stamza:</p>
+<p><code>yaml
+  mirrors:
+  - sourceCluster: "my-cluster-source"
+targetCluster: "my-cluster-target"
+sourceConnector:
+  config:
+    replication.factor: 1
+    offset-syncs.topic.replication.factor: 1
+    sync.topic.acls.enabled: "false"
+targetConnector:
+  tls:
+    trustedCertificates:
+      - secretName: my-cluster-cluster-cert
+        certificate: ca.crt</code></p>
 </li>
 <li>
 <p>The consumer may be started in second or third step. To start it, you can use a new container or use one of the running kafka broker container. Using the <code>Docker perspective</code> in Visual Code, we can get into a bash shell within one of the Kafka broker container. The local folder is mounted to <code>/home</code>. Then the script, <code>consumeFromLocal.sh source.orders</code> will get messages from the replicated topic: <code>source.orders</code></p>
@@ -511,6 +541,7 @@ oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.cr
 <li>connect-offsets: This topic is used to store offsets for Kafka Connect.</li>
 <li>connect-status: This topic will store status updates of connectors and tasks.</li>
 </ul>
+<h2 id="from-event-streams-on-cloud-to-strimzi-cluster-on-openshift">From Event Streams On Cloud to Strimzi Cluster on Openshift</h2>
                 
                   
                 
