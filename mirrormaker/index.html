@@ -318,6 +318,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#general-concepts" title="General concepts" class="md-nav__link">
+    General concepts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#from-strimzi-kafka-cluster-on-openshift-cluster-to-local-cluster" title="From Strimzi kafka cluster on Openshift cluster to local cluster" class="md-nav__link">
     From Strimzi kafka cluster on Openshift cluster to local cluster
   </a>
@@ -341,6 +348,13 @@
         <li class="md-nav__item">
   <a href="#from-event-streams-on-cloud-to-strimzi-cluster-on-openshift" title="From Event Streams On Cloud to Strimzi Cluster on Openshift" class="md-nav__link">
     From Event Streams On Cloud to Strimzi Cluster on Openshift
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors" title="Errors" class="md-nav__link">
+    Errors
   </a>
   
 </li>
@@ -401,6 +415,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#general-concepts" title="General concepts" class="md-nav__link">
+    General concepts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#from-strimzi-kafka-cluster-on-openshift-cluster-to-local-cluster" title="From Strimzi kafka cluster on Openshift cluster to local cluster" class="md-nav__link">
     From Strimzi kafka cluster on Openshift cluster to local cluster
   </a>
@@ -424,6 +445,13 @@
         <li class="md-nav__item">
   <a href="#from-event-streams-on-cloud-to-strimzi-cluster-on-openshift" title="From Event Streams On Cloud to Strimzi Cluster on Openshift" class="md-nav__link">
     From Event Streams On Cloud to Strimzi Cluster on Openshift
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors" title="Errors" class="md-nav__link">
+    Errors
   </a>
   
 </li>
@@ -452,6 +480,23 @@
 <ul>
 <li>Replicate from Event Streams on cloud being source cluster to local cluster running on local machine (started via docker-compose) using Strimzi Kafka docker image.</li>
 <li>Replicate from <a href="https://strimzi.io/">Strimzi</a> Kafka cluster running on OpenShift to Event Streams on Cloud. (See detail <a href="#from-strimzi-local-as-source-to-event-streams-on-cloud-as-target">in this section</a>)</li>
+</ul>
+<h2 id="general-concepts">General concepts</h2>
+<p>The figure below illustrates the mirror maker internal components running in Kafka Connect. </p>
+<p><img alt="" src="../images/mm-k-connect.png" /></p>
+<p>On the the target cluster, mirror maker created the following topics:</p>
+<ul>
+<li>mm2-configs.source.internal: This topic will store the connector and task configurations.</li>
+<li>mm2-offsets.source.internal: This topic is used to store offsets for Kafka Connect.</li>
+<li>
+<p>mm2-status.source.internal: This topic will store status updates of connectors and tasks.</p>
+</li>
+<li>
+<p>White listed topics is set with the <code>.topics</code> attribute and use Java regular expression syntax. </p>
+</li>
+<li>Blacklisted topics: by default the following pattern is applied 
+<div class="codehilite"><pre><span></span>blacklist = [follower\.replication\.throttled\.replicas, leader\.replication\.throttled\.replicas, message\.timestamp\.difference\.max\.ms, message\.timestamp\.type, unclean\.leader\.election\.enable, min\.insync\.replicas]
+</pre></div></li>
 </ul>
 <h2 id="from-strimzi-kafka-cluster-on-openshift-cluster-to-local-cluster">From Strimzi kafka cluster on Openshift cluster to local cluster</h2>
 <p><img alt="" src="../images/mm2-test1.png" /></p>
@@ -552,14 +597,6 @@ oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.cr
 <span class="na">source-&gt;target.topics</span><span class="o">=</span><span class="s">orders</span>
 </pre></div>
 
-<p>The figure below illustrates the mirror maker internal components running in Kafka Connect. </p>
-<p><img alt="" src="../images/mm-k-connect.png" /></p>
-<p>On the the target cluster, mirror maker created the following topics:</p>
-<ul>
-<li>connect-configs: This topic will store the connector and task configurations.</li>
-<li>connect-offsets: This topic is used to store offsets for Kafka Connect.</li>
-<li>connect-status: This topic will store status updates of connectors and tasks.</li>
-</ul>
 <h2 id="from-strimzi-local-as-source-to-event-streams-on-cloud-as-target">From Strimzi local as source to Event Streams on Cloud as Target.</h2>
 <p>We have created an Event Streams cluster on Washington DC data center. We have a Strimzi Kafka cluster defined in Washington data center in a OpenShift Cluster. As both clusters are in the same data center, we deploy Mirror Maker 2.0 close to target cluster (Event Streams on Cloud).</p>
 <p><img alt="" src="../images/mm2-local-to-es.png" /></p>
@@ -573,7 +610,7 @@ oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.cr
 <li>Deploy Mirror maker 2.0 within this project</li>
 <li>Define a secret for the API key of the target cluster
 <code>oc create secret generic es-apikey-target --from-literal=binding=am_</code></li>
-<li>Start a producer </li>
+<li>Start a producer (for example the below code send products reference data into products topic)</li>
 </ul>
 <div class="codehilite"><pre><span></span><span class="nb">export</span> <span class="nv">KAFKA_PWD</span><span class="o">=</span><span class="s2">&quot;replace-with-event-streams-apikey&quot;</span>
 <span class="nb">export</span> <span class="nv">KAFKA_BROKERS</span><span class="o">=</span><span class="s2">&quot;...&quot;</span>
@@ -582,7 +619,7 @@ python SendProductToKafka.py
 </pre></div>
 
 <ul>
-<li>Define a souce cluster properties file with truststore and bootstrap servers. This file is used for the different Kafka tools like kafka-topics.sh or console producer and consumer.</li>
+<li>Define a source cluster properties file with truststore and bootstrap servers. This file is used for the different Kafka tools like kafka-topics.sh or console producer and consumer.</li>
 </ul>
 <div class="codehilite"><pre><span></span><span class="na">bootstrap.servers</span><span class="o">=</span><span class="s">....</span>
 <span class="na">security.protocol</span><span class="o">=</span><span class="s">SSL</span>
@@ -618,6 +655,14 @@ cd /opt/kafka/bin
 </pre></div>
 
 <h2 id="from-event-streams-on-cloud-to-strimzi-cluster-on-openshift">From Event Streams On Cloud to Strimzi Cluster on Openshift</h2>
+<h2 id="errors">Errors</h2>
+<ul>
+<li>Plugin class loader for connector: 'org.apache.kafka.connect.mirror.MirrorCheckpointConnector' was not found.</li>
+<li>Error while fetching metadata with correlation id 2314 : {source.heartbeats=UNKNOWN_TOPIC_OR_PARTITION}</li>
+<li>Exception on not being able to create Log directory: do the following: <code>export LOG_DIR=/tmp/logs</code></li>
+<li>ERROR WorkerSourceTask{id=MirrorSourceConnector-0} Failed to flush, timed out while waiting for producer to flush outstanding 1 messages</li>
+<li>ERROR WorkerSourceTask{id=MirrorSourceConnector-0} Failed to commit offsets (org.apache.kafka.connect.runtime.SourceTaskOffsetCommitter:114)</li>
+</ul>
                 
                   
                 
