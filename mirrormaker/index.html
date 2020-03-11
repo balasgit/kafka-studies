@@ -577,16 +577,16 @@ creates only one single task. <code>MirrorSourceConnector</code> will have one t
 <ul>
 <li>Create the target topics in the target cluster. The following topics needs to be created upfront in events streams as Access Control does not authorize program to create topic dynamically.</li>
 </ul>
-<div class="codehilite"><pre><span></span>cloudctl es topic-create -n mm2-configs.source.internal -p 1 -r 3 -c cleanup.policy=compact
-cloudctl es topic-create -n mm2-offsets.source.internal -p 25 -r 3 -c cleanup.policy=compact
-cloudctl es topic-create -n mm2-status.source.internal -p 5 -r 3 -c cleanup.policy=compact
-cloudctl es topic-create -n source.products -p 1 -r 3
-cloudctl es topic-create -n source.heartbeats -p 1 -r 3
-cloudctl es topic-create -n source.checkpoints.internal -p 1 -r 3 -c cleanup.policy=compact
+<div class="codehilite"><pre><span></span>ibmcloud es topic-create -n mm2-configs.source.internal -p 1  -c cleanup.policy=compact
+ibmcloud es topic-create -n mm2-offsets.source.internal -p 25 -c cleanup.policy=compact
+ibmcloud es topic-create -n mm2-status.source.internal -p 5 -c cleanup.policy=compact
+ibmcloud es topic-create -n source.products -p 1
+ibmcloud es topic-create -n source.heartbeats -p 1
+ibmcloud es topic-create -n source.checkpoints.internal -p 1 -c cleanup.policy=compact
 </pre></div>
 
 <ul>
-<li>In one window terminal, start local cluster using docker-compose under the <code>mirror-maker-2/local-cluster</code> folder: <code>docker-compose up &amp;</code>. The data are persisted on the local disk in this folder. </li>
+<li>In one window terminal, start local cluster using docker-compose under the <code>mirror-maker-2/local-cluster</code> folder: <code>docker-compose up &amp;</code>. The data are persisted on the local disk in this folder.</li>
 <li>If this is the first time you started the cluster, you need to create the <code>products</code> topic. Start a Kafka container to access the Kafka tool with the command:</li>
 </ul>
 <div class="codehilite"><pre><span></span>docker run -ti -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home --network kafkanet strimzi/kafka:latest-kafka-2.4.0 bash
@@ -650,6 +650,7 @@ $ ./kafka-console-consumer.sh --bootstrap-server kafka1:9092 --topic products --
 $ /home/local-cluster/launchMM2.sh
 </pre></div>
 
+<p><em>This script is updating a template properties file with the values of the environment variables and call  <code>/opt/kafka/bin/connect-mirror-maker.sh</code></em></p>
 <p>The trace includes a ton of messages, which demonstrate different consumers and producers, workers and tasks. The logs can be found in the <code>/tmp/logs</code> folder. The table includes some of the elements of this configuration:</p>
 <table>
 <thead>
@@ -704,18 +705,58 @@ $ /home/local-cluster/launchMM2.sh
 <p>We have created an Event Streams cluster on Washington DC data center. We have a Strimzi Kafka cluster defined in Washington data center in a OpenShift Cluster. As both clusters are in the same data center, we deploy Mirror Maker 2.0 close to target cluster (Event Streams on Cloud).</p>
 <p>What needs to be done:</p>
 <ul>
-<li>Get a Openshift cluster in the same data center as Event Streams service.</li>
-<li>Create a project in OpenShift, for example: <code>MirrorMakerToES</code>.</li>
-<li>Deploy the Strimzi Kafka cluster and topic operators. See the sections on role binding, cluster operator, topic operator and user operator deployments from the <a href="../strimzi-deploy/">deployment note</a>.</li>
-<li>Define source and target cluster properties in mirror maker mm2.yaml file </li>
+<li>Get a Openshift cluster in the same data center as Event Streams service: See this <a href="https://cloud.ibm.com/kubernetes/catalog/about?platformType=openshift">product introduction</a>.</li>
+<li>Create a project in OpenShift, for example: <code>mirror-maker-2-to-es</code>.</li>
+<li>Deploy the Strimzi Kafka cluster and topic operators. See the sections on role binding, cluster operator, topic operator and user operator deployments from the <a href="../strimzi-deploy/">deployment note</a>. The 0.17.0 source is in <a href="https://github.com/strimzi/strimzi-kafka-operator/releases">this repository</a>, unzip and use the <code>install</code> folder + strimzi instructions.</li>
 </ul>
-<div class="codehilite"><pre><span></span>
+<p><em>The service account and role binding do not need to be installed if you did it previously.</em>
+<em> If not done yet create a secret for the API KEY of the Event Streams cluster
+</em> Define source and target cluster properties in mirror maker 2.0 <code>kafka-to-es-mm2.yml</code> file:</p>
+<div class="codehilite"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kafka.strimzi.io/v1alpha1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">KafkaMirrorMaker2</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mirror-maker-2-cluster</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">jb-kafka-strimzi</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.4.0</span>
+  <span class="nt">replicas</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+  <span class="nt">connectCluster</span><span class="p">:</span> <span class="s">&quot;mirror-maker-connect-cluster&quot;</span>
+  <span class="nt">clusters</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">alias</span><span class="p">:</span> <span class="s">&quot;kafka-on-premise-cluster-source&quot;</span>
+    <span class="nt">bootstrapServers</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-cluster-kafka-bootstrap-jb-kafka-strimzi.gse-eda-demos-fa9ee67c9ab6a7791435450358e564cc-0001.us-east.containers.appdomain.cloud:443</span>
+    <span class="nt">tls</span><span class="p">:</span>
+      <span class="nt">trustedCertificates</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="nt">secretName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-cluster-cluster-ca-cert</span>
+          <span class="nt">certificate</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ca.crt</span>
+  <span class="p p-Indicator">-</span> <span class="nt">alias</span><span class="p">:</span> <span class="s">&quot;event-streams-wdc-as-target&quot;</span>
+    <span class="nt">bootstrapServers</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">broker-3-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-1-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-0-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-5-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-2-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-4-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093</span>
+    <span class="nt">authentication</span><span class="p">:</span>
+      <span class="nt">username</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">token</span>
+      <span class="nt">passwordSecret</span><span class="p">:</span>
+        <span class="nt">secretName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">es-apikey-target</span>
+        <span class="nt">password</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">password</span>
+      <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">plain</span>
+    <span class="nt">config</span><span class="p">:</span>
+      <span class="nt">config.storage.replication.factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+      <span class="nt">offset.storage.replication.factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+      <span class="nt">status.storage.replication.factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+  <span class="nt">mirrors</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">sourceCluster</span><span class="p">:</span> <span class="s">&quot;kafka-on-premise-cluster-source&quot;</span>
+    <span class="nt">targetCluster</span><span class="p">:</span> <span class="s">&quot;event-streams-wdc-as-target&quot;</span>
+    <span class="nt">heartbeatConnector</span><span class="p">:</span>
+      <span class="nt">config</span><span class="p">:</span>
+        <span class="nt">heartbeats.topic.replication.factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+    <span class="nt">checkpointConnector</span><span class="p">:</span>
+      <span class="nt">config</span><span class="p">:</span>
+        <span class="nt">checkpoints.topic.replication.factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+    <span class="nt">topicsPattern</span><span class="p">:</span> <span class="s">&quot;products&quot;</span>
+    <span class="nt">groupsPattern</span><span class="p">:</span> <span class="s">&quot;.*&quot;</span>
 </pre></div>
 
 <ul>
-<li>Deploy Mirror maker 2.0 pod within this project</li>
+<li>Deploy Mirror maker 2.0 within this project</li>
 </ul>
-<div class="codehilite"><pre><span></span>oc apply -f mm2-pod.yaml 
+<div class="codehilite"><pre><span></span>oc apply -f kafka-to-es-mm2.yaml 
 </pre></div>
 
 <ul>
@@ -867,7 +908,7 @@ oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.cr
 <p>The consumer may be started in second or third step. To start it, you can use a new container or use one of the running kafka broker container. Using the <code>Docker perspective</code> in Visual Code, we can get into a bash shell within one of the Kafka broker container. The local folder is mounted to <code>/home</code>. Then the script, <code>consumeFromLocal.sh source.orders</code> will get messages from the replicated topic: <code>source.orders</code></p>
 </li>
 <li>
-<p>Finally start the producer in another kafka broker shell</p>
+<p>Finally start the producer in another shell</p>
 </li>
 </ul>
 <div class="codehilite"><pre><span></span>/home/produceToStrimzi.sh orders
