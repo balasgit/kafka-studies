@@ -384,8 +384,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#scenario-5-from-kafka-cluster-on-openshift-cluster-to-local-cluster" title="Scenario 5: From Kafka cluster on Openshift cluster to local cluster" class="md-nav__link">
-    Scenario 5: From Kafka cluster on Openshift cluster to local cluster
+  <a href="#scenario-5-from-event-streams-on-premise-to-event-streams-on-cloud" title="Scenario 5: From event streams on premise to event streams on cloud" class="md-nav__link">
+    Scenario 5: From event streams on premise to event streams on cloud
   </a>
   
 </li>
@@ -495,8 +495,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#scenario-5-from-kafka-cluster-on-openshift-cluster-to-local-cluster" title="Scenario 5: From Kafka cluster on Openshift cluster to local cluster" class="md-nav__link">
-    Scenario 5: From Kafka cluster on Openshift cluster to local cluster
+  <a href="#scenario-5-from-event-streams-on-premise-to-event-streams-on-cloud" title="Scenario 5: From event streams on premise to event streams on cloud" class="md-nav__link">
+    Scenario 5: From event streams on premise to event streams on cloud
   </a>
   
 </li>
@@ -533,14 +533,57 @@
 <li>Replicate from local cluster to Event Streams on Cloud (See detail <a href="#scenario-1-from-kafka-local-as-source-to-event-streams-on-cloud-as-target">in the scenario 1 section</a>)</li>
 <li>Replicate from <a href="https://strimzi.io/">Strimzi</a> 'local' Kafka cluster running on OpenShift to Event Streams on Cloud. (See detail <a href="#scenario-2-run-mirror-maker-2-cluster-close-to-target-cluster">in the scenario 2 section</a>)</li>
 <li>Replicate from <a href="#scenario-3-from-event-streams-to-local-cluster">Event Streams on cloud being the source cluster to local Kafka cluster</a> running on local machine (started via docker-compose) using Strimzi Kafka docker image.</li>
+<li>Replicate from <a href="#scenario-5-from-event-streams-on-premise-to-event-streams-on-cloud">Event Streams on premise running on Openshift being the source cluster to Event Stream on the Cloud as target cluster</a>.</li>
 </ul>
-<p>The <code>mirror-maker-2</code> folder includes, scripts, code and configurations to support the testing.</p>
+<table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>Source</th>
+<th>Target</th>
+<th>Connect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Local</td>
+<td>Event Streams on Cloud</td>
+<td>Local</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Strimzi on OCP</td>
+<td>Event Streams on Cloud</td>
+<td>OCP / Roks</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Event Streams on Cloud</td>
+<td>Local</td>
+<td>Local</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Event Streams on Cloud</td>
+<td>Strimzi on OCP</td>
+<td>OCP/ Roks</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Event Streams on OCP</td>
+<td>Event Streams on Cloud</td>
+<td>OCP / Roks</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>mirror-maker-2</code> folder includes, scripts, code and configurations to support those scenarios.</p>
 <h2 id="pre-requisites">Pre-requisites</h2>
 <ul>
-<li>You need to have one Event Streams service on IBM Cloud.</li>
-<li>We may need to use Event Streams CLI. So follow <a href="https://cloud.ibm.com/docs/services/EventStreams?topic=eventstreams-cli#cli">those instructions</a> to get it.</li>
+<li>You need to have one Event Streams service created on IBM Cloud.</li>
+<li>You may need to use Event Streams CLI. So follow <a href="https://cloud.ibm.com/docs/services/EventStreams?topic=eventstreams-cli#cli">those instructions</a> to get it.</li>
 </ul>
-<p>The following command presents the Event Stream cluster metadata, like broker list and cluster ID:</p>
+<p>The following ibmcloud CLI command presents the Event Stream cluster's metadata, like the broker list and the cluster ID:</p>
 <div class="codehilite"><pre><span></span>ibmcloud es cluster
 </pre></div>
 
@@ -621,10 +664,11 @@ ibmcloud es topic-create -n source.checkpoints.internal -p 1 -c cleanup.policy=c
 <li>Send some products data to this topic. For that we use a docker python image. The docker file to build this image is <code>python-kafka/Dockerfile-python</code> so the command build this image (if you change the image name be sure to use the new name in future command): <code>docker build -f Dockerfile-python -t jbcodeforce/python37 .</code></li>
 </ul>
 <p>Once the image is built, start the python environment with the following commands:</p>
-<p><div class="codehilite"><pre><span></span><span class="nb">source</span> ./setenv.sh
+<div class="codehilite"><pre><span></span><span class="nb">source</span> ./setenv.sh
 docker run -ti -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home --rm -e <span class="nv">KAFKA_BROKERS</span><span class="o">=</span><span class="nv">$KAFKA_SOURCE_BROKERS</span> --network kafkanet jbcodeforce/python37   bash
 </pre></div>
-  In the container bash shell do the following</p>
+
+<p>In the container bash shell do the following</p>
 <div class="codehilite"><pre><span></span>$ <span class="nb">echo</span> <span class="nv">$KAFKA_BROKERS</span>
 kafka1:9092,kafka2:9093,kafka3:9094
 $ python SendProductToKafka.py ./data/products.json
@@ -727,6 +771,7 @@ $ /home/local-cluster/launchMM2.sh
 <p>So the scenario is similar in term of test as the scenario 1 but Mirror Maker runs within an OpenShift cluster in the same data center as Event Streams cluster.</p>
 <p><img alt="" src="../images/mm2-local-to-es.png" /></p>
 <p>We have created an Event Streams cluster on Washington DC data center. We have a Strimzi Kafka cluster defined in Washington data center in a OpenShift Cluster. As both clusters are in the same data center, we deploy Mirror Maker 2.0 close to target cluster (Event Streams on Cloud).</p>
+<p>Producers are running locally on the same openshift cluster as a pod, or can run remotely using exposed Openshift route.</p>
 <p>What needs to be done:</p>
 <ul>
 <li>Get a Openshift cluster in the same data center as Event Streams service: See this <a href="https://cloud.ibm.com/kubernetes/catalog/about?platformType=openshift">product introduction</a>.</li>
@@ -785,15 +830,8 @@ $ /home/local-cluster/launchMM2.sh
 </pre></div>
 
 <ul>
-<li>Define a source cluster properties file with truststore and bootstrap servers. This file is used for the different Kafka tools like kafka-topics.sh or console consumer.</li>
+<li>Define a target cluster property file:</li>
 </ul>
-<div class="codehilite"><pre><span></span><span class="na">bootstrap.servers</span><span class="o">=</span><span class="s">....</span>
-<span class="na">security.protocol</span><span class="o">=</span><span class="s">SSL</span>
-<span class="na">ssl.truststore.password</span><span class="o">=</span><span class="s">password</span>
-<span class="na">ssl.truststore.location</span><span class="o">=</span><span class="s">/home/truststore.jks</span>
-</pre></div>
-
-<p>and a target cluster property file:</p>
 <div class="codehilite"><pre><span></span><span class="na">bootstrap.servers</span><span class="o">=</span><span class="s">broker-3-q.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-4-q.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093</span>
 <span class="na">security.protocol</span><span class="o">=</span><span class="s">SASL_SSL</span>
 <span class="na">ssl.protocol</span><span class="o">=</span><span class="s">TLSv1.2</span>
@@ -802,32 +840,29 @@ $ /home/local-cluster/launchMM2.sh
 </pre></div>
 
 <ul>
-<li>Start a consumer locally on your compute using the Strimzi/kafka image.</li>
+<li>To validate the source <code>products</code> topic has records, start a consumer as pod on Openshift within the source Kafka cluster using the Strimzi/kafka image.</li>
 </ul>
-<div class="codehilite"><pre><span></span>docker run -ti -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home strimzi/kafka:latest-kafka-2.4.0 bash
-<span class="nb">cd</span> /opt/kafka/bin
-./kafka-console-consumer.sh --bootstrap-server my-cluster-kafka-bootstrap-jb-kafka-strimzi.gse-eda-demos-fa9ee67c9ab6a7791435450358e564cc-0001.us-east.containers.appdomain.cloud:443 --consumer.config /home/strimzi.properties  --topic products
+<div class="codehilite"><pre><span></span>oc run kafka-consumer -ti --image<span class="o">=</span>strimzi/kafka:latest-kafka-2.4.0 --rm<span class="o">=</span><span class="nb">true</span> --restart<span class="o">=</span>Never -- bin/kafka-console-consumer.sh --bootstrap-server my-cluster-kafka-bootstrap:9092 --topic products --from-beginning
 </pre></div>
 
 <ul>
-<li>Start a producer to send product records to the Kafka local cluster, which is Strimzi cluster on OpenShift. If you have done the scenario 1, the first product definitions are already in the target cluster, so we can send a second batch of products using a second data file:</li>
+<li>Start a producer to send product records to the source Kafka cluster. If you have done the scenario 1, the first product definitions may be already in the target cluster, so we can send a second batch of products using a second data file:</li>
 </ul>
 <div class="codehilite"><pre><span></span><span class="nb">export</span> <span class="nv">KAFKA_BROKERS</span><span class="o">=</span><span class="s2">&quot;my-cluster-kafka-bootstrap-jb-kafka-strimzi.gse-eda-demos-fa9ee67c9ab6a7791435450358e564cc-0001.us-east.containers.appdomain.cloud:443&quot;</span>
-docker run -ti -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home --rm -e <span class="nv">KAFKA_PWD</span><span class="o">=</span><span class="nv">$KAFKA_PWD</span> -e <span class="nv">KAFKA_BROKERS</span><span class="o">=</span><span class="nv">$KAFKA_BROKERS</span> jbcodeforce/python37   bash
+<span class="nb">export</span> <span class="nv">KAFKA_CERT</span><span class="o">=</span><span class="s2">&quot;/home/ca.cert&quot;</span>
+docker run -ti -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home --rm -e <span class="nv">KAFKA_CERT</span><span class="o">=</span><span class="nv">$KAFKA_CERT</span> -e <span class="nv">KAFKA_BROKERS</span><span class="o">=</span><span class="nv">$KAFKA_BROKERS</span> jbcodeforce/python37   bash
 python SendProductToKafka.py ./data/products2.json
 </pre></div>
 
-<ul>
-<li>Verify the created topics on target cluster (Event Streams)</li>
-</ul>
-<p><div class="codehilite"><pre><span></span>/opt/kafka/bin/kafka-topics.sh --bootstrap-server <span class="nv">$KAFKA_TARGET_BROKERS</span> --command-config /home/eventstream.properties --list
-</pre></div>
-* In case you need it... looking at source cluster topic list:</p>
-<div class="codehilite"><pre><span></span>/opt/kafka/bin/kafka-topics.sh --bootstrap-server my-cluster-kafka-bootstrap-jb-kafka-strimzi.gse-eda-demos-fa9ee67c9ab6a7791435450358e564cc-0001.us-east.containers.appdomain.cloud:443 --command-config /home/strinzi.properties --list 
-</pre></div>
+<p>As an alternate to this external producer, we can start a producer as pod inside Openshift, and then send the product one by one:</p>
+<div class="codehilite"><pre><span></span>oc run kafka-producer -ti --image<span class="o">=</span>strimzi/kafka:latest-kafka-2.4.0  --rm<span class="o">=</span><span class="nb">true</span> --restart<span class="o">=</span>Never -- bin/kafka-console-producer.sh --broker-list my-cluster-kafka-bootstrap:9092 --topic products
+If you don<span class="s1">&#39;t see a command prompt, try pressing enter.</span>
 
-<p>Get detail on one topic:</p>
-<div class="codehilite"><pre><span></span>/opt/kafka/bin//kafka-topics.sh --bootstrap-server my-cluster-kafka-bootstrap-jb-kafka-strimzi.gse-eda-demos-fa9ee67c9ab6a7791435450358e564cc-0001.us-east.containers.appdomain.cloud:443  --command-config /home/strimzi.properties --describe --topic products
+<span class="s1">&gt;{&#39;</span>product_id<span class="s1">&#39;: &#39;</span>P01<span class="s1">&#39;, &#39;</span>description<span class="s1">&#39;: &#39;</span>Carrots<span class="s1">&#39;, &#39;</span>target_temperature<span class="s1">&#39;: 4, &#39;</span>target_humidity_level<span class="s1">&#39;: 0.4, &#39;</span>content_type<span class="s1">&#39;: 1}</span>
+<span class="s1">&gt;{&#39;</span>product_id<span class="s1">&#39;: &#39;</span>P02<span class="s1">&#39;, &#39;</span>description<span class="s1">&#39;: &#39;</span>Banana<span class="s1">&#39;, &#39;</span>target_temperature<span class="s1">&#39;: 6, &#39;</span>target_humidity_level<span class="s1">&#39;: 0.6, &#39;</span>content_type<span class="s1">&#39;: 2}</span>
+<span class="s1">&gt;{&#39;</span>product_id<span class="s1">&#39;: &#39;</span>P03<span class="s1">&#39;, &#39;</span>description<span class="s1">&#39;: &#39;</span>Salad<span class="s1">&#39;, &#39;</span>target_temperature<span class="s1">&#39;: 4, &#39;</span>target_humidity_level<span class="s1">&#39;: 0.4, &#39;</span>content_type<span class="s1">&#39;: 1}</span>
+<span class="s1">&gt;{&#39;</span>product_id<span class="s1">&#39;: &#39;</span>P04<span class="s1">&#39;, &#39;</span>description<span class="s1">&#39;: &#39;</span>Avocado<span class="s1">&#39;, &#39;</span>target_temperature<span class="s1">&#39;: 6, &#39;</span>target_humidity_level<span class="s1">&#39;: 0.4, &#39;</span>content_type<span class="s1">&#39;: 1}</span>
+<span class="s1">&gt;{&#39;</span>product_id<span class="s1">&#39;: &#39;</span>P05<span class="s1">&#39;, &#39;</span>description<span class="s1">&#39;: &#39;</span>Tomato<span class="s1">&#39;, &#39;</span>target_temperature<span class="s1">&#39;: 4, &#39;</span>target_humidity_level<span class="s1">&#39;: 0.4, &#39;</span>content_type<span class="err">&#39;</span>: <span class="m">2</span><span class="o">}</span>
 </pre></div>
 
 <h2 id="scenario-3-from-event-streams-to-local-cluster">Scenario 3: From Event Streams to local cluster</h2>
@@ -849,7 +884,7 @@ python SendProductToKafka.py ./data/products2.json
 <p>We have created an Event Streams cluster on Washington DC data center. We have a Strimzi Kafka cluster defined in Washington data center in a OpenShift Cluster. As both clusters are in the same data center, we deploy Mirror Maker 2.0 close to target cluster (Event Streams on Cloud).</p>
 <h2 id="scenario-4-from-event-streams-on-cloud-to-strimzi-cluster-on-openshift">Scenario 4: From Event Streams On Cloud to Strimzi Cluster on Openshift</h2>
 <p><img alt="" src="../images/mm2-test2.png" /></p>
-<h2 id="scenario-5-from-kafka-cluster-on-openshift-cluster-to-local-cluster">Scenario 5: From Kafka cluster on Openshift cluster to local cluster</h2>
+<h2 id="scenario-5-from-event-streams-on-premise-to-event-streams-on-cloud">Scenario 5: From event streams on premise to event streams on cloud</h2>
 <p><img alt="" src="../images/mm2-test1.png" /></p>
 <p>The source cluster is a Strimzi cluster running on Openshift as a service on IBM Cloud. It was installed following the instructions <a href="https://ibm-cloud-architecture.github.io/refarch-eda/deployments/strimzi/deploy/">documented here</a>.</p>
 <p>The target cluster is also based on Strimzi kafka 2.4 docker image, but run in a local host, with docker compose. It starts two zookeeper nodes, and three kafka nodes. We need 3 kafka brokers as mirror maker created topics with a replication factor set to 3.</p>
