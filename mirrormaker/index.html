@@ -618,7 +618,7 @@ ibmcloud es topic-create -n source.checkpoints.internal -p 1 -c cleanup.policy=c
 
 <p>Then in the bash shell, go to <code>/home/local-cluster</code> folder and execute the script: <code>./createProductsTopic.sh</code>. Verify it is created with the command: <code>/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka1:9092 --list</code></p>
 <ul>
-<li>Send some products data to this topic. For that we use a docker python image. The docker file to build this image is <code>Dockerfile-python</code> so the command build this image (if you change the image name be sure to use the new name in future command): <code>docker build -f Dockerfile-python -t jbcodeforce/python37 .</code></li>
+<li>Send some products data to this topic. For that we use a docker python image. The docker file to build this image is <code>python-kafka/Dockerfile-python</code> so the command build this image (if you change the image name be sure to use the new name in future command): <code>docker build -f Dockerfile-python -t jbcodeforce/python37 .</code></li>
 </ul>
 <p>Once the image is built, start the python environment with the following commands:</p>
 <p><div class="codehilite"><pre><span></span><span class="nb">source</span> ./setenv.sh
@@ -627,7 +627,7 @@ docker run -ti -v <span class="k">$(</span><span class="nb">pwd</span><span clas
   In the container bash shell do the following</p>
 <div class="codehilite"><pre><span></span>$ <span class="nb">echo</span> <span class="nv">$KAFKA_BROKERS</span>
 kafka1:9092,kafka2:9093,kafka3:9094
-$ python SendProductToKafka.py 
+$ python SendProductToKafka.py ./data/products.json
 
 <span class="o">[</span>KafkaProducer<span class="o">]</span> - <span class="o">{</span><span class="s1">&#39;bootstrap.servers&#39;</span>: <span class="s1">&#39;kafka1:9092,kafka2:9093,kafka3:9094&#39;</span>, <span class="s1">&#39;group.id&#39;</span>: <span class="s1">&#39;ProductsProducer&#39;</span><span class="o">}</span>
 <span class="o">{</span><span class="s1">&#39;product_id&#39;</span>: <span class="s1">&#39;P01&#39;</span>, <span class="s1">&#39;description&#39;</span>: <span class="s1">&#39;Carrots&#39;</span>, <span class="s1">&#39;target_temperature&#39;</span>: <span class="m">4</span>, <span class="s1">&#39;target_humidity_level&#39;</span>: <span class="m">0</span>.4, <span class="s1">&#39;content_type&#39;</span>: <span class="m">1</span><span class="o">}</span>
@@ -785,16 +785,7 @@ $ /home/local-cluster/launchMM2.sh
 </pre></div>
 
 <ul>
-<li>Start a producer (for example the below code send products reference data into products topic)</li>
-</ul>
-<div class="codehilite"><pre><span></span><span class="nb">export</span> <span class="nv">KAFKA_PWD</span><span class="o">=</span><span class="s2">&quot;replace-with-event-streams-apikey&quot;</span>
-<span class="nb">export</span> <span class="nv">KAFKA_BROKERS</span><span class="o">=</span><span class="s2">&quot;...&quot;</span>
-docker run -ti -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home --rm -e <span class="nv">KAFKA_PWD</span><span class="o">=</span><span class="nv">$KAFKA_PWD</span> -e <span class="nv">KAFKA_BROKERS</span><span class="o">=</span><span class="nv">$KAFKA_BROKERS</span> jbcodeforce/python37   bash
-python SendProductToKafka.py
-</pre></div>
-
-<ul>
-<li>Define a source cluster properties file with truststore and bootstrap servers. This file is used for the different Kafka tools like kafka-topics.sh or console producer and consumer.</li>
+<li>Define a source cluster properties file with truststore and bootstrap servers. This file is used for the different Kafka tools like kafka-topics.sh or console consumer.</li>
 </ul>
 <div class="codehilite"><pre><span></span><span class="na">bootstrap.servers</span><span class="o">=</span><span class="s">....</span>
 <span class="na">security.protocol</span><span class="o">=</span><span class="s">SSL</span>
@@ -811,22 +802,25 @@ python SendProductToKafka.py
 </pre></div>
 
 <ul>
-<li>
-<p>Start a product producer with a python client code</p>
-</li>
-<li>
-<p>Start a consumer locally on your compute using the Strimzi/kafka image.</p>
-</li>
+<li>Start a consumer locally on your compute using the Strimzi/kafka image.</li>
 </ul>
-<div class="codehilite"><pre><span></span>docker run -ti -v $(pwd):/home strimzi/kafka:latest-kafka-2.4.0 bash
-cd /opt/kafka/bin
+<div class="codehilite"><pre><span></span>docker run -ti -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home strimzi/kafka:latest-kafka-2.4.0 bash
+<span class="nb">cd</span> /opt/kafka/bin
 ./kafka-console-consumer.sh --bootstrap-server my-cluster-kafka-bootstrap-jb-kafka-strimzi.gse-eda-demos-fa9ee67c9ab6a7791435450358e564cc-0001.us-east.containers.appdomain.cloud:443 --consumer.config /home/strimzi.properties  --topic products
+</pre></div>
+
+<ul>
+<li>Start a producer to send product records to the Kafka local cluster, which is Strimzi cluster on OpenShift. If you have done the scenario 1, the first product definitions are already in the target cluster, so we can send a second batch of products using a second data file:</li>
+</ul>
+<div class="codehilite"><pre><span></span><span class="nb">export</span> <span class="nv">KAFKA_BROKERS</span><span class="o">=</span><span class="s2">&quot;my-cluster-kafka-bootstrap-jb-kafka-strimzi.gse-eda-demos-fa9ee67c9ab6a7791435450358e564cc-0001.us-east.containers.appdomain.cloud:443&quot;</span>
+docker run -ti -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/home --rm -e <span class="nv">KAFKA_PWD</span><span class="o">=</span><span class="nv">$KAFKA_PWD</span> -e <span class="nv">KAFKA_BROKERS</span><span class="o">=</span><span class="nv">$KAFKA_BROKERS</span> jbcodeforce/python37   bash
+python SendProductToKafka.py ./data/products2.json
 </pre></div>
 
 <ul>
 <li>Verify the created topics on target cluster (Event Streams)</li>
 </ul>
-<p><div class="codehilite"><pre><span></span>/opt/kafka/bin/kafka-topics.sh --bootstrap-server <span class="nv">$KAFKA_BROKERS</span> --command-config /home/eventstream.properties --list
+<p><div class="codehilite"><pre><span></span>/opt/kafka/bin/kafka-topics.sh --bootstrap-server <span class="nv">$KAFKA_TARGET_BROKERS</span> --command-config /home/eventstream.properties --list
 </pre></div>
 * In case you need it... looking at source cluster topic list:</p>
 <div class="codehilite"><pre><span></span>/opt/kafka/bin/kafka-topics.sh --bootstrap-server my-cluster-kafka-bootstrap-jb-kafka-strimzi.gse-eda-demos-fa9ee67c9ab6a7791435450358e564cc-0001.us-east.containers.appdomain.cloud:443 --command-config /home/strinzi.properties --list 
@@ -931,13 +925,7 @@ oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.cr
 <li>
 <p>The consumer may be started in second or third step. To start it, you can use a new container or use one of the running kafka broker container. Using the <code>Docker perspective</code> in Visual Code, we can get into a bash shell within one of the Kafka broker container. The local folder is mounted to <code>/home</code>. Then the script, <code>consumeFromLocal.sh source.orders</code> will get messages from the replicated topic: <code>source.orders</code></p>
 </li>
-<li>
-<p>Finally start the producer in another shell</p>
-</li>
 </ul>
-<div class="codehilite"><pre><span></span>/home/produceToStrimzi.sh orders
-</pre></div>
-
 <h2 id="typical-errors-in-mirror-maker-2-traces">Typical errors in Mirror Maker 2 traces</h2>
 <ul>
 <li>Plugin class loader for connector: 'org.apache.kafka.connect.mirror.MirrorCheckpointConnector' was not found.</li>
