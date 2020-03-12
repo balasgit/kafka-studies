@@ -289,6 +289,30 @@
       
       
 
+
+  <li class="md-nav__item">
+    <a href="../python/" title="Kafka with Python" class="md-nav__link">
+      Kafka with Python
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../strimzi-deploy/" title="Strimzi deployment" class="md-nav__link">
+      Strimzi deployment
+    </a>
+  </li>
+
+    
+      
+      
+      
+
   
 
 
@@ -710,17 +734,18 @@ $ /home/local-cluster/launchMM2.sh
 <li>Deploy the Strimzi Kafka cluster and topic operators. See the sections on role binding, cluster operator, topic operator and user operator deployments from the <a href="../strimzi-deploy/">deployment note</a>. The 0.17.0 source is in <a href="https://github.com/strimzi/strimzi-kafka-operator/releases">this repository</a>, unzip and use the <code>install</code> folder + strimzi instructions.</li>
 </ul>
 <p><em>The service account and role binding do not need to be installed if you did it previously.</em>
-<em> If not done yet create a secret for the API KEY of the Event Streams cluster
+<em> If not done yet, create a secret for the API KEY of the Event Streams cluster:
+<code>oc create secret generic es-apikey-target --from-literal=binding=&lt;replace-with-event-streams-apikey&gt;</code>
 </em> Define source and target cluster properties in mirror maker 2.0 <code>kafka-to-es-mm2.yml</code> file:</p>
 <div class="codehilite"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kafka.strimzi.io/v1alpha1</span>
 <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">KafkaMirrorMaker2</span>
 <span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mirror-maker-2-cluster</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mm2-cluster</span>
   <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">jb-kafka-strimzi</span>
 <span class="nt">spec</span><span class="p">:</span>
   <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.4.0</span>
   <span class="nt">replicas</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
-  <span class="nt">connectCluster</span><span class="p">:</span> <span class="s">&quot;mirror-maker-connect-cluster&quot;</span>
+  <span class="nt">connectCluster</span><span class="p">:</span> <span class="s">&quot;mm2-cluster&quot;</span>
   <span class="nt">clusters</span><span class="p">:</span>
   <span class="p p-Indicator">-</span> <span class="nt">alias</span><span class="p">:</span> <span class="s">&quot;kafka-on-premise-cluster-source&quot;</span>
     <span class="nt">bootstrapServers</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-cluster-kafka-bootstrap-jb-kafka-strimzi.gse-eda-demos-fa9ee67c9ab6a7791435450358e564cc-0001.us-east.containers.appdomain.cloud:443</span>
@@ -760,8 +785,6 @@ $ /home/local-cluster/launchMM2.sh
 </pre></div>
 
 <ul>
-<li>Define a secret for the API key of the target cluster
-<code>oc create secret generic es-apikey-target --from-literal=binding=am_</code></li>
 <li>Start a producer (for example the below code send products reference data into products topic)</li>
 </ul>
 <div class="codehilite"><pre><span></span><span class="nb">export</span> <span class="nv">KAFKA_PWD</span><span class="o">=</span><span class="s2">&quot;replace-with-event-streams-apikey&quot;</span>
@@ -831,6 +854,7 @@ cd /opt/kafka/bin
 
 <p>We have created an Event Streams cluster on Washington DC data center. We have a Strimzi Kafka cluster defined in Washington data center in a OpenShift Cluster. As both clusters are in the same data center, we deploy Mirror Maker 2.0 close to target cluster (Event Streams on Cloud).</p>
 <h2 id="scenario-4-from-event-streams-on-cloud-to-strimzi-cluster-on-openshift">Scenario 4: From Event Streams On Cloud to Strimzi Cluster on Openshift</h2>
+<p><img alt="" src="../images/mm2-test2.png" /></p>
 <h2 id="scenario-5-from-kafka-cluster-on-openshift-cluster-to-local-cluster">Scenario 5: From Kafka cluster on Openshift cluster to local cluster</h2>
 <p><img alt="" src="../images/mm2-test1.png" /></p>
 <p>The source cluster is a Strimzi cluster running on Openshift as a service on IBM Cloud. It was installed following the instructions <a href="https://ibm-cloud-architecture.github.io/refarch-eda/deployments/strimzi/deploy/">documented here</a>.</p>
@@ -946,7 +970,7 @@ oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.cr
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../kstreams/" title="Kafka streaming notes" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../strimzi-deploy/" title="Strimzi deployment" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -955,7 +979,7 @@ oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.cr
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Kafka streaming notes
+                Strimzi deployment
               </span>
             </div>
           </a>

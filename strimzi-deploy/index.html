@@ -36,7 +36,7 @@
     
     
       
-        <title>Strimzi Kafka deployment on Openshift or Kubernetes - Apache Kafka Studies</title>
+        <title>Strimzi deployment - Apache Kafka Studies</title>
       
     
     
@@ -121,7 +121,7 @@
               Apache Kafka Studies
             </span>
             <span class="md-header-nav__topic">
-              Strimzi Kafka deployment on Openshift or Kubernetes
+              Strimzi deployment
             </span>
           
         </div>
@@ -282,6 +282,123 @@
     <a href="../kstreams/" title="Kafka streaming notes" class="md-nav__link">
       Kafka streaming notes
     </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../python/" title="Kafka with Python" class="md-nav__link">
+      Kafka with Python
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Strimzi deployment
+      </label>
+    
+    <a href="./" title="Strimzi deployment" class="md-nav__link md-nav__link--active">
+      Strimzi deployment
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-namespace-or-openshift-project" title="Create a namespace or openshift project" class="md-nav__link">
+    Create a namespace or openshift project
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#download-the-strimzi-artefacts" title="Download the strimzi artefacts" class="md-nav__link">
+    Download the strimzi artefacts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#define-custom-resource-definition-for-kafka" title="Define Custom Resource Definition for kafka" class="md-nav__link">
+    Define Custom Resource Definition for kafka
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-kafka-cluster" title="Deploy Kafka cluster" class="md-nav__link">
+    Deploy Kafka cluster
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#topic-operator" title="Topic Operator" class="md-nav__link">
+    Topic Operator
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deploy-the-operator" title="Deploy the operator" class="md-nav__link">
+    Deploy the operator
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-topic" title="Create a topic" class="md-nav__link">
+    Create a topic
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-with-producer-and-consumer-pods" title="Test with producer and consumer pods" class="md-nav__link">
+    Test with producer and consumer pods
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
     
@@ -630,6 +747,41 @@ ssl.truststore.location<span class="o">=</span>/home/truststore.jks
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../python/" title="Kafka with Python" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Kafka with Python
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../mirrormaker/" title="Mirror Maker 2.0" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Mirror Maker 2.0
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
