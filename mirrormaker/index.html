@@ -824,14 +824,13 @@ $ /home/local-cluster/launchMM2.sh
 </pre></div>
 
 <ul>
-<li>Deploy Mirror maker 2.0 within this project</li>
+<li>Deploy Mirror maker 2.0 within this project. </li>
 </ul>
 <div class="codehilite"><pre><span></span>oc apply -f kafka-to-es-mm2.yaml 
 </pre></div>
 
-<ul>
-<li>Define a target cluster property file:</li>
-</ul>
+<p>This command 
+* Define a target cluster property file:</p>
 <div class="codehilite"><pre><span></span><span class="na">bootstrap.servers</span><span class="o">=</span><span class="s">broker-3-q.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-4-q.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093</span>
 <span class="na">security.protocol</span><span class="o">=</span><span class="s">SASL_SSL</span>
 <span class="na">ssl.protocol</span><span class="o">=</span><span class="s">TLSv1.2</span>
