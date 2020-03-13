@@ -809,52 +809,13 @@ oc describe secret kafka-truststore
 </pre></div>
 
 <ul>
-<li>Define source and target cluster properties in mirror maker 2.0 <code>kafka-to-es-mm2.yml</code> descriptor file:</li>
+<li>Define source and target cluster properties in mirror maker 2.0 <code>kafka-to-es-mm2.yml</code> descriptor file. We strongly recommend to study the schema definition of this <a href="https://github.com/strimzi/strimzi-kafka-operator/blob/2d35bfcd99295bef8ee98de9d8b3c86cb33e5842/install/cluster-operator/048-Crd-kafkamirrormaker2.yaml#L648-L663">custom resource from this page</a>:</li>
 </ul>
-<div class="codehilite"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kafka.strimzi.io/v1alpha1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">KafkaMirrorMaker2</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mm2-cluster</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">jb-kafka-strimzi</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.4.0</span>
-  <span class="nt">replicas</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
-  <span class="nt">connectCluster</span><span class="p">:</span> <span class="s">&quot;mm2-cluster&quot;</span>
-  <span class="nt">clusters</span><span class="p">:</span>
-  <span class="p p-Indicator">-</span> <span class="nt">alias</span><span class="p">:</span> <span class="s">&quot;kafka-on-premise-cluster-source&quot;</span>
-    <span class="nt">bootstrapServers</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-cluster-kafka-bootstrap-jb-kafka-strimzi.gse-eda-demos-fa9ee67c9ab6a7791435450358e564cc-0001.us-east.containers.appdomain.cloud:443</span>
-    <span class="nt">tls</span><span class="p">:</span>
-      <span class="nt">trustedCertificates</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="nt">secretName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kafka-truststore</span>
-          <span class="nt">certificate</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">truststore.jks</span>
-  <span class="p p-Indicator">-</span> <span class="nt">alias</span><span class="p">:</span> <span class="s">&quot;event-streams-wdc-as-target&quot;</span>
-    <span class="nt">bootstrapServers</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">broker-3-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-1-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-0-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-5-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-2-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093,broker-4-qnprtqnp7hnkssdz.kafka.svc01.us-east.eventstreams.cloud.ibm.com:9093</span>
-    <span class="nt">authentication</span><span class="p">:</span>
-      <span class="nt">username</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">token</span>
-      <span class="nt">passwordSecret</span><span class="p">:</span>
-        <span class="nt">secretName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">es-apikey-target</span>
-        <span class="nt">password</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">binding</span>
-      <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">plain</span>
-    <span class="nt">config</span><span class="p">:</span>
-      <span class="nt">config.storage.replication.factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
-      <span class="nt">offset.storage.replication.factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
-      <span class="nt">status.storage.replication.factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
-  <span class="nt">mirrors</span><span class="p">:</span>
-  <span class="p p-Indicator">-</span> <span class="nt">sourceCluster</span><span class="p">:</span> <span class="s">&quot;kafka-on-premise-cluster-source&quot;</span>
-    <span class="nt">targetCluster</span><span class="p">:</span> <span class="s">&quot;event-streams-wdc-as-target&quot;</span>
-    <span class="nt">heartbeatConnector</span><span class="p">:</span>
-      <span class="nt">config</span><span class="p">:</span>
-        <span class="nt">heartbeats.topic.replication.factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
-    <span class="nt">checkpointConnector</span><span class="p">:</span>
-      <span class="nt">config</span><span class="p">:</span>
-        <span class="nt">checkpoints.topic.replication.factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
-    <span class="nt">topicsPattern</span><span class="p">:</span> <span class="s">&quot;products&quot;</span>
-    <span class="nt">groupsPattern</span><span class="p">:</span> <span class="s">&quot;.*&quot;</span>
-</pre></div>
-
+<p>The <a href="https://github.com/jbcodeforce/kafka-studies/blob/master/mirror-maker-2/local-cluster/kafka-to-es-mm2.yml">yaml file is here</a>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The config part can match the Kafka configuration for consumer or producer, except properties starting by ssl, sasl, security, listeners, rest, bootstarp.servers which are declared at the cluster definition level.</p>
+<p>connectCluster defined the cluster alias used for Kafka Connect, it must match a cluster in the list at <code>spec.clusters</code>.
+The config part can match the Kafka configuration for consumer or producer, except properties starting by ssl, sasl, security, listeners, rest, bootstarp.servers which are declared at the cluster definition level.</p>
 </div>
 <ul>
 <li>Deploy Mirror maker 2.0 within this project. </li>
@@ -1002,7 +963,10 @@ oc extract secret/my-cluster-cluster-ca-cert --keys<span class="o">=</span>ca.cr
 </ul>
 <h2 id="typical-errors-in-mirror-maker-2-traces">Typical errors in Mirror Maker 2 traces</h2>
 <ul>
-<li>Plugin class loader for connector: 'org.apache.kafka.connect.mirror.MirrorCheckpointConnector' was not found.</li>
+<li>Plugin class loader for connector: 'org.apache.kafka.connect.mirror.MirrorCheckpointConnector' was not found. <ul>
+<li>This error message is a light issue in kafka 2.4 and does not impact the replication. In Kafka 2.5 this message is for DEBUG logs.</li>
+</ul>
+</li>
 <li>Error while fetching metadata with correlation id 2314 : {source.heartbeats=UNKNOWN_TOPIC_OR_PARTITION}:<ul>
 <li>Those messages may come from multiple reasons. One is the name topic is not created. In Event Streams topics needs to be created via CLI or User Interface. It can also being related to the fact the consumer polls on a topic that has just been created and the leader for this topic-partition is not yet available, you are in the middle of a leadership election.</li>
 <li>The advertised listener may not be set or found.</li>
